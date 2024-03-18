@@ -34,7 +34,8 @@ class MonteCarlo_simulator():
         
         return Price_simulation
     
-    def visualisation_price(self,Price_simulation): 
+    def visualisation_price(self): 
+        Price_simulation = self.monte_carlo_price_simulator()
         plt.figure(figsize=(10, 6))
         for i in range(self.n):
             price = np.insert(Price_simulation[:, i],0,self.S0)

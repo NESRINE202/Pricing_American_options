@@ -2,14 +2,26 @@
 import numpy as np 
 
 
-class Option:
-    def __init__(self, underlying_price, strike_price, expiration_date):
-        self.underlying_price = underlying_price
-        self.strike_price = strike_price
-        self.expiration_date = expiration_date
+class Optionn:
+    """
+    Representation of an option derivative
     
-    def payoff(self, spot_price):
-        
-        pass
+
+    s0: float
+    T: int
+    K: int
+    
+    call: bool = True
+    """
+    def __init__(self,s0,T,K,call = True) -> None:
+        self.s0 = s0
+        self.T = T 
+        self.K = K 
+        self.call = call 
+
+
+    def payoff(self, s: np.ndarray) -> np.ndarray:
+        payoff = np.maximum(s - self.K, 0) if self.call else np.maximum(self.K - s, 0)
+        return payoff
 
 
