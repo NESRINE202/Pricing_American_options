@@ -2,7 +2,7 @@
 import numpy as np 
 
 
-class Optionn:
+class Option:
     """
     Representation of an option derivative
     

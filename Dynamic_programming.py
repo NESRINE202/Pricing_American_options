@@ -43,7 +43,7 @@ class Dynamic_pricing(MonteCarlo_simulator):
                 else:
                     Tau[i, path] = Tau[i + 1, path]
 
-        monte_carlo_approx = sum([payoff_simulation[0, int(Tau[0, i])] for i in range(n)]) / n
+        monte_carlo_approx = sum([payoff_simulation[int(Tau[0, i])- 1,0] for i in range(n)]) / n
         U_0 = max(payoff_0, monte_carlo_approx)
 
         return U_0
