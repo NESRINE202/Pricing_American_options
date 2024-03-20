@@ -18,8 +18,6 @@ class Option:
         self.T = T 
         self.K = K 
         self.call = call 
-
-
     def payoff(self, s: np.ndarray) -> np.ndarray:
         payoff = np.maximum(s - self.K, 0) if self.call else np.maximum(self.K - s, 0)
         return payoff

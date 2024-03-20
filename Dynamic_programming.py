@@ -7,15 +7,17 @@ from Monte_carlo import MonteCarlo_simulator
     
 
 class Dynamic_pricing(MonteCarlo_simulator):
-    def __init__(self, r, sigma, S0, L, n,m,Projection_base,payoff_function):
-
-        super().__init__(r, sigma, S0, L, n)
-        self.m = m 
+    def __init__(self, S0, L, n, m, Projection_base, payoff_function, r=None, sigma=None, a=None, b=None, q=None, model_type="GBM"):
+        super().__init__(S0, L, n, r, sigma, a, b, q, model_type)
+        self.m = m #taille de la base de projection
         self.Projection_base  = Projection_base  # Améliorer : donner des noms aux polynomes à utiliser 
         self.payoff_function= payoff_function # pareil il y a dans ce cas call ou  put 
     
+    
+    #Z : payoff
+    #X: price
 
-    def least_square_minimizer(self, payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base):
+    def least_square_minimizer(self, payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base): #tau_i_1 = tau_i+1
         Y = np.array([payoff_simulation[int(Tau_i_1[path] - 1), path] for path in range(self.n)])
         X = np.array([Projection_base(self.m, Price_simulation_i[path]) for path in range(self.n)])
         model = LinearRegression()
@@ -26,8 +28,8 @@ class Dynamic_pricing(MonteCarlo_simulator):
     def dynamic_prog_price(self):
 
         payoff_0 = self.payoff_function(self.S0)
-        n = self.n
-        m = self.m
+        n = self.n # nombre des simulaions 
+        m = self.m #taille de la base
         L = self.L
 
         payoff_simulation = self.monte_carlo_payoff_simulator(self.payoff_function)
@@ -47,4 +49,5 @@ class Dynamic_pricing(MonteCarlo_simulator):
         U_0 = max(payoff_0, monte_carlo_approx)
 
         return U_0
+
 
