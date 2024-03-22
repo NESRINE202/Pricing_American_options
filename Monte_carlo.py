@@ -43,12 +43,14 @@ class MonteCarlo_simulator():
         elif self.model_type == "Binomial":
             for path in range(self.n):
                 Price_simulation[0, path] = self.S0
+                r = np.random.choice([self.a, self.b], size=self.L-1, p=[self.q, 1-self.q])
                 for i in range(1, self.L ):
-                    z = np.random.rand()  # Tirage aléatoire entre 0 et 1
-                    if z < self.q:
-                        Price_simulation[i, path] = Price_simulation[i-1, path] * self.a 
-                    else:
-                        Price_simulation[i, path] = Price_simulation[i-1, path] * self.b  
+                    Price_simulation[i, path] = Price_simulation[i-1, path] * r[i-1]
+                    # z = np.random.rand()  # Tirage aléatoire entre 0 et 1
+                    # if z < self.q:
+                    #     Price_simulation[i, path] = Price_simulation[i-1, path] * self.a 
+                    # else:
+                    #     Price_simulation[i, path] = Price_simulation[i-1, path] * self.b  
 
         return Price_simulation
     # def monte_carlo_price_simulator(self):
