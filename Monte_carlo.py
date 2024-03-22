@@ -23,11 +23,11 @@ class MonteCarlo_simulator():
     def monte_carlo_price_simulator(self):
 
         Price_simulation = np.zeros((self.L+1, self.n))  # Fixed the size to include initial price
-
+        print(Price_simulation)
         for path in range(self.n):
             # We initialize the price at time 1
-            z_0 = np.random.normal(0, 1)
-            Price_simulation[0, path] = self.S0 * np.exp((self.r - self.sigma**2 / 2) * (1 / self.L) + self.sigma * np.sqrt(1 / self.L) * z_0)
+            Price_simulation[0, path] = self.S0
+            print(Price_simulation[0])
             for i in range(1, self.L + 1):  # Corrected range to include time T
                z_i = np.random.normal(0, 1)
                Price_simulation[i, path] = Price_simulation[i - 1, path] * np.exp((self.r - self.sigma**2 / 2) * (1 / self.L) + self.sigma * np.sqrt(1 / self.L) * z_i)
