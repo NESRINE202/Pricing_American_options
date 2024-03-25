@@ -32,10 +32,11 @@ class MonteCarlo_simulator():
        
         if self.model_type == "GBM":
             for path in range(self.n):
+                Price_simulation[0, path] = self.S0
             # We initialize the price at time 1 
                 z_0 = np.random.normal(0,1)  # W1-W0
-                Price_simulation[0,path] = self.S0* np.exp((self.r-self.sigma**2/2)+self.sigma*z_0) # GeometricBrownianMotion   # X1
-                for i in range(1,self.L): 
+                Price_simulation[1,path] = self.S0* np.exp((self.r-self.sigma**2/2)+self.sigma*z_0) # GeometricBrownianMotion   # X1
+                for i in range(2,self.L): 
                     z_i = np.random.normal(0,1) #Wt+1 -Wt
                     Price_simulation[i,path] = Price_simulation[i-1,path]*np.exp((self.r-self.sigma**2/2)+self.sigma*z_i)
                     
@@ -77,14 +78,13 @@ class MonteCarlo_simulator():
         plt.title('Monte Carlo Simulation of Asset Prices')
         plt.xlabel('Time')
         plt.ylabel('Price')
-        plt.legend()
+        #plt.legend()
         plt.grid(True)
         plt.show()
 
     
-    def monte_carlo_payoff_simulator(self, payoff_function):
+    def monte_carlo_payoff_simulator(self, payoff_function,price_simulation):
 
-        price_simulation = self.monte_carlo_price_simulator()
 
         return np.vectorize(payoff_function)(price_simulation)
     
