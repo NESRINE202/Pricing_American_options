@@ -49,9 +49,7 @@ class MonteCarlo_simulator():
         plt.show()
 
     
-    def monte_carlo_payoff_simulator(self, payoff_function):
-
-        price_simulation = self.monte_carlo_price_simulator()
+    def monte_carlo_payoff_simulator(self, payoff_function,price_simulation):
 
         return np.vectorize(payoff_function)(price_simulation)
     

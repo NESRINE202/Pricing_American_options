@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from Monte_carlo import MonteCarlo_simulator 
-
+from scipy.optimize import minimize
 
     
 
@@ -21,7 +21,24 @@ class Dynamic_pricing(MonteCarlo_simulator):
         model = LinearRegression()
         model.fit(X, Y)
         alpha = model.coef_
+
         return alpha
+    
+  
+
+    
+    def minimize_scipy(self, payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base): 
+            Y = np.array([payoff_simulation[int(Tau_i_1[path] - 1), path] for path in range(self.n)])
+            X = np.array([Projection_base(self.m, Price_simulation_i[path]) for path in range(self.n)])  
+            def cost_function(alpha):
+                return sum([(Y[i] - alpha.T @ X[i])**2 for i in range(len(Y))])
+            
+            Initial_guess = np.zeros((self.m,1))
+            result = minimize(cost_function,Initial_guess)
+            alpha = result.x
+            return alpha
+
+
 
     def dynamic_prog_price(self):
 
@@ -29,15 +46,23 @@ class Dynamic_pricing(MonteCarlo_simulator):
         n = self.n
         m = self.m
         L = self.L
-
-        payoff_simulation = self.monte_carlo_payoff_simulator(self.payoff_function)
-
+        price_simulation = self.monte_carlo_price_simulator()   
+        payoff_simulation = self.monte_carlo_payoff_simulator(self.payoff_function,price_simulation)
+        
         Tau = np.zeros((L - 1, n))
         Tau[L - 2, :] = L * np.ones(n)
         for i in range(L - 3, -1, -1):
-            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], payoff_simulation[i, :], self.Projection_base)
+            # alpha_i = self.minimize_scipy(payoff_simulation, Tau[i + 1, :], price_simulation[i, :], self.Projection_base)
+            # print(alpha_i)
+            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i, :], self.Projection_base)
+            # """Tester et afficher l'écart à chaque fois"""
+            # Y = np.array([payoff_simulation[int(Tau[i,path] - 1), path] for path in range(self.n)])
+            # X = np.array([self.Projection_base(self.m, price_simulation[i,path]) for path in range(self.n)])
+
+            # print("Redidu= ",np.linalg.norm(Y-X @ alpha_i))
+            
             for path in range(n):
-                approx_ = alpha_i.T @ self.Projection_base(m,payoff_simulation[i, path])
+                approx_ = alpha_i.T @ self.Projection_base(m,price_simulation[i, path])
                 if payoff_simulation[i, path] >= approx_:
                     Tau[i, path] = i
                 else:
