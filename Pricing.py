@@ -1,6 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
 from Dynamic_programming import Dynamic_pricing
 from collections import Counter
 
@@ -23,3 +20,4 @@ class Pricing(Dynamic_pricing):
         element, frequence = compteur.most_common(1)[0]
         print('u le plus fréquent =:',element)
         print('sa fréquence =',frequence)
+        return(element,frequence)
