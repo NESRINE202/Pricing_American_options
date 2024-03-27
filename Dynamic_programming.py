@@ -3,8 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from Monte_carlo import MonteCarlo_simulator 
 
-
-    
+from scipy.optimize import minimize
 
 class Dynamic_pricing(MonteCarlo_simulator):
     def __init__(self, S0, L, n, m, Projection_base, payoff_function, r=None, sigma=None, a=None, b=None, q=None, model_type="GBM"):
@@ -14,12 +13,25 @@ class Dynamic_pricing(MonteCarlo_simulator):
         self.payoff_function= payoff_function # pareil il y a dans ce cas call ou  put 
 
     #   "hala"
-    def least_square_minimizer(self,payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base,n,m):  #hala
+    def least_square_minimizer(self,payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base,N,m):
+        def loss_function(alpha):
+            total_loss = 0
+            for n in range(1, 1+N):
+                Z_n = payoff_simulation[int(Tau_i_1[n - 1]),n-1]
+                em_X_n = Projection_base(m, Price_simulation_i[n - 1])
+                loss = (Z_n - alpha.dot(em_X_n.T)) ** 2  # Transpose em_X_n to make dot product compatible
+                total_loss += loss
+            return total_loss
+
+        result = minimize(loss_function, np.zeros(m+1))
+        alpha = result.x
+        return alpha
+    def least_square_minimizer1(self,payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base,n,m):  #hala
         Y = np.zeros(len(Tau_i_1))
         
         # Fill the array Y by selecting elements from Z based on indices
         for k in range(n):
-            Y[k]=payoff_simulation[int(Tau_i_1[k]-1),k]
+            Y[k]=payoff_simulation[int(Tau_i_1[k]),k]
         X = np.array([Projection_base(m, Price_simulation_i[path]) for path in range(n)])
         model = LinearRegression()
         model.fit(X, Y)
@@ -40,17 +52,17 @@ class Dynamic_pricing(MonteCarlo_simulator):
         Tau = np.zeros((L, n))
         Tau[L - 1, :] = L * np.ones(n)
         for i in range(L - 2, -1, -1):
-            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i, :], self.Projection_base,n,m)
+            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i+1, :], self.Projection_base,n,m)
             for path in range(n):
-                approx_ = alpha_i.T @ self.Projection_base(m,price_simulation[i, path])
-                if payoff_simulation[i, path] >= approx_:
-                    Tau[i, path] = i
+                approx_ = alpha_i.T @ self.Projection_base(m,price_simulation[i+1, path])
+                if payoff_simulation[i+1, path] >= approx_:
+                    Tau[i, path] = i+1
                 else:
                     Tau[i, path] = Tau[i + 1, path]
         monte_carlo_approx = sum([payoff_simulation[int(Tau[0, i]),i] for i in range(n)]) / n
         U_0 = max(payoff_0, monte_carlo_approx)
 
-        return U_0
+        return U_0,Tau
 
 
 

@@ -28,24 +28,24 @@ class MonteCarlo_simulator():
 #  use the GeometricBrownianMotion class to simulation some paths : sigma, r 
 # or binomial tree
     def monte_carlo_price_simulator(self):
-        Price_simulation = np.zeros((self.L, self.n))  # X0  X=price
+        Price_simulation = np.zeros((self.L +1, self.n))  # X0  X=price
        
         if self.model_type == "GBM":
             for path in range(self.n):
                 Price_simulation[0, path] = self.S0
             # We initialize the price at time 1 
-                z_0 = np.random.normal(0,1)  # W1-W0
-                Price_simulation[1,path] = self.S0* np.exp((self.r-self.sigma**2/2)+self.sigma*z_0) # GeometricBrownianMotion   # X1
-                for i in range(2,self.L): 
+                
+                for i in range(1,self.L+1): 
                     z_i = np.random.normal(0,1) #Wt+1 -Wt
-                    Price_simulation[i,path] = Price_simulation[i-1,path]*np.exp((self.r-self.sigma**2/2)+self.sigma*z_i)
+                    Price_simulation[i,path] = Price_simulation[i-1,path]* np.exp((self.r - self.sigma**2 / 2) * (1 / self.L) + self.sigma * np.sqrt(1 / self.L) * z_i)
+                    #np.exp((self.r-self.sigma**2/2)+self.sigma*z_i)
                     
                     
         elif self.model_type == "Binomial":
             for path in range(self.n):
                 Price_simulation[0, path] = self.S0
                 r = np.random.choice([self.a, self.b], size=self.L-1, p=[self.q, 1-self.q])
-                for i in range(1, self.L ):
+                for i in range(1, self.L +1):
                     Price_simulation[i, path] = Price_simulation[i-1, path] * r[i-1]
                     # z = np.random.rand()  # Tirage aléatoire entre 0 et 1
                     # if z < self.q:
@@ -73,7 +73,7 @@ class MonteCarlo_simulator():
         plt.figure(figsize=(10, 6))
         for i in range(self.n): #pour chaque simulation on va tracer l'évolution du prix
             price = np.insert(Price_simulation[:, i],0,self.S0)
-            plt.plot(range(self.L+1), price, label=f"Path {i+1}")
+            plt.plot(range(self.L+2), price, label=f"Path {i+1}")
 
         plt.title('Monte Carlo Simulation of Asset Prices')
         plt.xlabel('Time')
