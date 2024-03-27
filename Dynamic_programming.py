@@ -11,9 +11,10 @@ class DynamicPricing(MonteCarlo_simulator):
     """
     A class for dynamic pricing using Monte Carlo simulation.
     """
-    def __init__(
-        self, r: float, sigma: float, S0: float, L: float,
-        m: int,n:int, projection_base: str, payoff_function) -> None:
+    def __init__(self, S0, L, n, m, projection_base, payoff_function, r=None, sigma=None, a=None, b=None, q=None, model_type="GBM")-> None:
+        super().__init__(S0, L, n, r, sigma, a, b, q, model_type)
+      
+    
         """
         Initialize the DynamicPricing object.
 
@@ -27,7 +28,7 @@ class DynamicPricing(MonteCarlo_simulator):
             projection_base (str): Type of projection base ('poly' or 'Laguerre').
             payoff_function (Callable): Payoff function for options (call or put).
         """
-        super().__init__(r, sigma, S0, L,n)
+        
         self.m = m 
         self.payoff_function = payoff_function
         self.projection_base = self._set_projection_base(projection_base)
@@ -83,14 +84,14 @@ class DynamicPricing(MonteCarlo_simulator):
 
     
     
-    def least_square_minimizer1(self,payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base,n,m):  
+    def least_square_minimizer(self,payoff_simulation, Tau_i_1, Price_simulation_i, projection_base,n,m):  
         Y = np.zeros(len(Tau_i_1))
         
         # Fill the array Y by selecting elements from Z based on indices
         for k in range(n):
             Y[k]=payoff_simulation[int(Tau_i_1[k]),k]
         #X denotes the matrix of Projection base applied to Price simulation i
-        X = np.array([Projection_base(m, Price_simulation_i[path]) for path in range(n)])
+        X = np.array([projection_base(m, Price_simulation_i[path]) for path in range(n)])
         #We perform a linear regression in order to find the coefficient alpha
         model = LinearRegression()
         model.fit(X, Y)
@@ -111,9 +112,9 @@ class DynamicPricing(MonteCarlo_simulator):
         Tau = np.zeros((L, n))
         Tau[L - 1, :] = L * np.ones(n)
         for i in range(L - 2, -1, -1):
-            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i+1, :], self.Projection_base,n,m)
+            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i+1, :], self.projection_base,n,m)
             for path in range(n):
-                approx_ = alpha_i.T @ self.Projection_base(m,price_simulation[i+1, path])
+                approx_ = alpha_i.T @ self.projection_base(m,price_simulation[i+1, path])
                 if payoff_simulation[i+1, path] >= approx_:
                     Tau[i, path] = i+1
                 else:
