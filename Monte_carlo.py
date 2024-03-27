@@ -72,8 +72,8 @@ class MonteCarlo_simulator():
         Price_simulation = self.monte_carlo_price_simulator()
         plt.figure(figsize=(10, 6))
         for i in range(self.n): #pour chaque simulation on va tracer l'évolution du prix
-            price = np.insert(Price_simulation[:, i],0,self.S0)
-            plt.plot(range(self.L+2), price, label=f"Path {i+1}")
+
+            plt.plot(range(self.L+1), Price_simulation, label=f"Path {i+1}")
 
         plt.title('Monte Carlo Simulation of Asset Prices')
         plt.xlabel('Time')
