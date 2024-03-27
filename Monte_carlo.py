@@ -7,13 +7,13 @@ class MonteCarlo_simulator():
         
         """
         ARGS: 
-        r : risk free rate 
-        sigma : volatilty of the asset 
-        s_0 : the price at time 0
-        L : time de maturity / number of divisions of time  
-        n: number of simulation/paths we want
-        a,b = interest rate binomial model
-        q : proba of having a
+        r: risk free rate, type = float
+        sigma: volatilty of the asset , type = float
+        s_0 : the price at time 0, type = float
+        L : time de maturity / number of divisions of time  , type = int
+        n: number of simulation/paths we want , type = int
+        a,b = interest rate binomial model , type = float in [-1,1]
+        q : proba of having a, type = float
         model_type : type of the model ("GBM" , "Binomial" )
         """
         self.r = r
@@ -30,33 +30,28 @@ class MonteCarlo_simulator():
         Price_simulation = np.zeros((self.L+1, self.n))  # Fixed the size to include initial price
         if self.model_type == "GBM":
             for path in range(self.n):
-                # We initialize the price at time 1
-                z_0 = np.random.normal(0, 1)
-                Price_simulation[0, path] = self.S0 * np.exp((self.r - self.sigma**2 / 2) * (1 / self.L) + self.sigma * np.sqrt(1 / self.L) * z_0)
-                for i in range(1, self.L + 1):  # Corrected range to include time T
+                Price_simulation[0, path] = self.S0  # We initialize the Price at time 0
+                for i in range(1, self.L + 1):  
                     z_i = np.random.normal(0, 1)
                     Price_simulation[i, path] = Price_simulation[i - 1, path] * np.exp((self.r - self.sigma**2 / 2) * (1 / self.L) + self.sigma * np.sqrt(1 / self.L) * z_i)
 
         elif self.model_type == "Binomial":
             for path in range(self.n):
-                Price_simulation[0, path] = self.S0
-                r = np.random.choice([self.a, self.b], size=self.L-1, p=[self.q, 1-self.q])
+                Price_simulation[0, path] = self.S0 # We initialize the Price at time 0
+                r = np.random.choice([self.a, self.b], size=self.L, p=[self.q, 1-self.q])
                 for i in range(1, self.L+1 ):
-                    Price_simulation[i, path] = Price_simulation[i-1, path] * r[i-1]
+                    Price_simulation[i, path] = Price_simulation[i-1, path] * (1+r[i-1])
                     
         return Price_simulation
 
     def visualisation_price(self): 
         Price_simulation = self.monte_carlo_price_simulator()
         plt.figure(figsize=(10, 6))
-        for i in range(self.n):
-            price = np.insert(Price_simulation[:, i],0,self.S0)
-            plt.plot(range(self.L+1), price, label=f"Path {i+1}")
-
+        for i in range(self.n): #for each simulation, we plot the price evolution.
+            plt.plot(range(self.L+1), Price_simulation, label=f"Path {i+1}")
         plt.title('Monte Carlo Simulation of Asset Prices')
         plt.xlabel('Time')
         plt.ylabel('Price')
-        #plt.legend()
         plt.grid(True)
         plt.show()
     

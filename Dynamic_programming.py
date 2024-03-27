@@ -18,11 +18,12 @@ class DynamicPricing(MonteCarlo_simulator):
         Initialize the DynamicPricing object.
 
         Parameters:
-            r (float): Risk-free interest rate.
-            sigma (float): Volatility.
-            S0 (float): Initial stock price.
-            L (float): Stock price at maturity.
-            m (int): Number of basis functions.
+            r: risk free rate, type = float
+            sigma: volatilty of the asset , type = float
+            s_0 : the price at time 0, type = float
+            L : time de maturity / number of divisions of time  , type = int
+            n: number of simulation/paths we want , type = int
+            m : Number of basis functions. type =int
             projection_base (str): Type of projection base ('poly' or 'Laguerre').
             payoff_function (Callable): Payoff function for options (call or put).
         """
@@ -30,9 +31,7 @@ class DynamicPricing(MonteCarlo_simulator):
         self.m = m 
         self.payoff_function = payoff_function
         self.projection_base = self._set_projection_base(projection_base)
-        # self.projection_base = projection_base
-
-
+        
     def _set_projection_base(self, projection_base: str):
         """
         Set the projection base function.
@@ -56,9 +55,9 @@ class DynamicPricing(MonteCarlo_simulator):
         Polynomial projection base function.
 
         Parameters:
-            m (int): Number of basis functions.
-            x (np.ndarray): Input array.
-
+            m: Number of basis functions. type= int
+            x: Input array. type= np.ndarray
+            
         Returns:
             np.ndarray: Polynomial base.
         """
@@ -70,8 +69,8 @@ class DynamicPricing(MonteCarlo_simulator):
         Laguerre projection base function.
 
         Parameters:
-            m (int): Number of basis functions.
-            x (np.ndarray): Input array.
+            m: Number of basis functions. type= int
+            x: Input array. type= np.ndarray
 
         Returns:
             np.ndarray: Laguerre base.
@@ -84,41 +83,42 @@ class DynamicPricing(MonteCarlo_simulator):
 
     
     
-    def least_square_minimizer(self,payoff_simulation, Tau_i_1, Price_simulation_i, projection_base,m,n):
+    def least_square_minimizer1(self,payoff_simulation, Tau_i_1, Price_simulation_i, Projection_base,n,m):  
         Y = np.zeros(len(Tau_i_1))
         
         # Fill the array Y by selecting elements from Z based on indices
         for k in range(n):
-            Y[k]=payoff_simulation[int(Tau_i_1[k]-1),k]
-        X = np.array([projection_base(m, Price_simulation_i[path]) for path in range(n)])
+            Y[k]=payoff_simulation[int(Tau_i_1[k]),k]
+        #X denotes the matrix of Projection base applied to Price simulation i
+        X = np.array([Projection_base(m, Price_simulation_i[path]) for path in range(n)])
+        #We perform a linear regression in order to find the coefficient alpha
         model = LinearRegression()
         model.fit(X, Y)
         alpha = model.coef_
         return alpha
+    
 
     def dynamic_prog_price(self):
 
         payoff_0 = self.payoff_function(self.S0)
-        price_simulation=self.monte_carlo_price_simulator()
+        n = self.n # number of simulations
+        m = self.m # size of the projection base
+        L = self.L # maturity
+        
+        price_simulation = self.monte_carlo_price_simulator()
         payoff_simulation = self.monte_carlo_payoff_simulator(self.payoff_function,price_simulation)
         
-        n  = self.n
-        m  = self.m
-        L = self.L
         Tau = np.zeros((L, n))
         Tau[L - 1, :] = L * np.ones(n)
         for i in range(L - 2, -1, -1):
-            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i, :], self.projection_base,m,n)
+            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i+1, :], self.Projection_base,n,m)
             for path in range(n):
-                approx_ = alpha_i.T @ self.projection_base(m,price_simulation[i, path])
-                if payoff_simulation[i, path] >= approx_:
-                    Tau[i, path] = i
+                approx_ = alpha_i.T @ self.Projection_base(m,price_simulation[i+1, path])
+                if payoff_simulation[i+1, path] >= approx_:
+                    Tau[i, path] = i+1
                 else:
                     Tau[i, path] = Tau[i + 1, path]
-
-
-        monte_carlo_approx = sum([payoff_simulation[int(Tau[0, i])- 1,0] for i in range(n)]) / n
+        monte_carlo_approx = sum([payoff_simulation[int(Tau[0, i]),i] for i in range(n)]) / n
         U_0 = max(payoff_0, monte_carlo_approx)
 
         return U_0
-

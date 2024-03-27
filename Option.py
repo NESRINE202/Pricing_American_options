@@ -7,9 +7,9 @@ class Option:
     Representation of an option derivative
     
 
-    s0: float
-    T: int
-    K: int
+    s0: Price at time 0 float
+    T: Maturity int 
+    K: Strike Price int
     
     call: bool = True
     """
