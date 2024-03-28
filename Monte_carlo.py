@@ -45,8 +45,8 @@ class MonteCarlo_simulator():
                     
         return Price_simulation
 
-    def visualisation_price(self): 
-        Price_simulation = self.monte_carlo_price_simulator()
+    def visualisation_price(self,Price_simulation): 
+        # Price_simulation = self.monte_carlo_price_simulator()
         plt.figure(figsize=(10, 6))
         for i in range(self.n): #for each simulation, we plot the price evolution.
             plt.plot(range(self.L+1), Price_simulation, label=f"Path {i+1}")
