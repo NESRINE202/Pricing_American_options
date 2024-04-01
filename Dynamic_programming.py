@@ -109,16 +109,38 @@ class DynamicPricing(MonteCarlo_simulator):
         price_simulation = self.monte_carlo_price_simulator()
         payoff_simulation = self.monte_carlo_payoff_simulator(self.payoff_function,price_simulation)
         
+        discounted_price_simulation = np.zeros(np.shape(price_simulation))
+        for i in range(price_simulation.shape[0]): 
+            for path in range(price_simulation.shape[1]): 
+                discounted_price_simulation[i,path] = price_simulation[i,path]*np.exp(-self.r * (self.L - (i+1)))
+        
+        discounted_payoff_simulation = np.zeros(np.shape(payoff_simulation))
+        for i in range(payoff_simulation.shape[0]): 
+            for path in range(payoff_simulation.shape[1]): 
+                discounted_payoff_simulation[i,path] = payoff_simulation[i,path]*np.exp(-self.r * (self.L - (i+1)))
+              
+        
         Tau = np.zeros((L, n))
         Tau[L - 1, :] = L * np.ones(n)
         for i in range(L - 2, -1, -1):
-            alpha_i = self.least_square_minimizer(payoff_simulation, Tau[i + 1, :], price_simulation[i+1, :], self.projection_base,n,m)
+            
+            alpha_i = self.least_square_minimizer(discounted_payoff_simulation, Tau[i + 1, :], discounted_price_simulation[i+1, :], self.projection_base,n,m)
             for path in range(n):
-                approx_ = alpha_i.T @ self.projection_base(m,price_simulation[i+1, path])
-                if payoff_simulation[i+1, path] >= approx_:
+                # Discounted payoff 
+                approx_ = alpha_i.T @ self.projection_base(m,discounted_price_simulation[i+1, path])
+                # discounted_payoff = np.exp(-self.r * (self.L - (i+1)))*payoff_simulation[i+1, path]
+                if discounted_payoff_simulation[i+1, path] >= approx_:
                     Tau[i, path] = i+1
                 else:
                     Tau[i, path] = Tau[i + 1, path]
-        monte_carlo_approx = sum([payoff_simulation[int(Tau[0, i]),i] for i in range(n)]) / n
+         
+         
+         # Discounting step           
+        discounted_payoffs = np.zeros(n)
+        for path in range(n):
+            discounted_payoffs[path] = payoff_simulation[int(Tau[0, path]), path] * np.exp(-self.r * (self.L - int(Tau[0, path])))
+        monte_carlo_approx = np.mean(discounted_payoffs)
         U_0 = max(payoff_0, monte_carlo_approx)
         return U_0,Tau
+    
+#  np.exp(-self.r * (self.L - int(Tau[0,i])))
