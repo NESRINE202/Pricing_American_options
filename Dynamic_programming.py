@@ -143,4 +143,3 @@ class DynamicPricing(MonteCarlo_simulator):
         U_0 = max(payoff_0, monte_carlo_approx)
         return U_0,Tau
     
-#  np.exp(-self.r * (self.L - int(Tau[0,i])))
